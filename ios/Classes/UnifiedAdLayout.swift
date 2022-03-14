@@ -21,7 +21,7 @@ class UnifiedAdLayout : NSObject, FlutterPlatformView {
     private let layoutName: String
     private let attributionText: String
 
-    private let unifiedNativeAdView: GADUnifiedNativeAdView!
+    private let unifiedNativeAdView: GADNativeAdView!
     
     private weak var headlineView: UILabel!
     private weak var bodyView: UILabel!
@@ -47,11 +47,11 @@ class UnifiedAdLayout : NSObject, FlutterPlatformView {
         GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = self.args["test_devices"] as? [String]
 
         self.adLoader = GADAdLoader(adUnitID: placementId, rootViewController: nil,
-                    adTypes: [ .unifiedNative ], options: nil)
+                    adTypes: [ .native ], options: nil)
         channel = FlutterMethodChannel(name: "com.github.sakebook.ios/unified_ad_layout_\(viewId)", binaryMessenger: messeneger)
         
         guard let nibObjects = Bundle.main.loadNibNamed(layoutName, owner: nil, options: nil),
-              let adView = nibObjects.first as? GADUnifiedNativeAdView else {
+              let adView = nibObjects.first as? GADNativeAdView else {
             fatalError("Could not load nib file for adView")
         }
         unifiedNativeAdView = adView
@@ -95,12 +95,12 @@ class UnifiedAdLayout : NSObject, FlutterPlatformView {
     }
 }
 
-extension UnifiedAdLayout : GADUnifiedNativeAdLoaderDelegate {
-    func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: GADRequestError) {
-        channel.invokeMethod("didFailToReceiveAdWithError", arguments: ["errorCode": error.code, "message": error.localizedDescription])
+extension UnifiedAdLayout : GADNativeAdLoaderDelegate {
+    func adLoader(_ adLoader: GADAdLoader, didFailToReceiveAdWithError error: Error) {
+        channel.invokeMethod("didFailToReceiveAdWithError", arguments: ["errorCode": error.localizedDescription, "message": error.localizedDescription])
     }
     
-    public func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADUnifiedNativeAd) {
+    public func adLoader(_ adLoader: GADAdLoader, didReceive nativeAd: GADNativeAd) {
         channel.invokeMethod("didReceive", arguments: nil)
         headlineView.text = nativeAd.headline
         bodyView.text = nativeAd.body
@@ -121,17 +121,17 @@ extension UnifiedAdLayout : GADUnifiedNativeAdLoaderDelegate {
 }
 
 // MARK: - GADUnifiedNativeAdDelegate implementation
-extension UnifiedAdLayout : GADUnifiedNativeAdDelegate {
+extension UnifiedAdLayout : GADNativeAdDelegate {
     
-    func nativeAdDidRecordClick(_ nativeAd: GADUnifiedNativeAd) {
+    func nativeAdDidRecordClick(_ nativeAd: GADNativeAd) {
         channel.invokeMethod("nativeAdDidRecordClick", arguments: nil)
     }
     
-    func nativeAdDidRecordImpression(_ nativeAd: GADUnifiedNativeAd) {
+    func nativeAdDidRecordImpression(_ nativeAd: GADNativeAd) {
         channel.invokeMethod("nativeAdDidRecordImpression", arguments: nil)
     }
     
-    func nativeAdWillLeaveApplication(_ nativeAd: GADUnifiedNativeAd) {
+    func nativeAdWillLeaveApplication(_ nativeAd: GADNativeAd) {
         channel.invokeMethod("nativeAdWillLeaveApplication", arguments: nil)
     }
 }
